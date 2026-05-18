@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Image Resizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" />
+            <div class="slider round">
+                <svg class="icon icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg class="icon icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </div>
+        </label>
+        <span id="theme-label">Light Mode</span>
+    </div>
+
+    <header class="header">
+        <h1>Universal <span class="highlight">Image Resizer</span></h1>
+        <p>Resize, reformat, compress, and edit images to your exact specifications.</p>
+        
+        <div class="mode-tabs">
+            <button id="tab-single" class="tab-btn active">Single Image Mode</button>
+            <button id="tab-batch" class="tab-btn">Batch Processing</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <aside class="sidebar card">
+            <section class="upload-section">
+                <div class="drop-zone" id="drop-zone">
+                    <input type="file" id="file-input" accept="image/*,.heic,.heif" multiple hidden />
+                    <div id="drop-zone-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <h2 id="upload-title">Upload Image</h2>
+                        <p id="upload-subtitle">Drag & Drop or Click (Single file)</p>
+                    </div>
+                    <div id="upload-status" class="hidden">
+                        <h3 id="upload-count-text">0 files selected</h3>
+                        <p class="small-text">Click to change</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="controls-section">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="input-width">Target Width</label>
+                        <div class="input-suffix">
+                            <input type="number" id="input-width" placeholder="800" min="1" value="800">
+                            <span>px</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="input-height">Target Height</label>
+                        <div class="input-suffix">
+                            <input type="number" id="input-height" placeholder="600" min="1" value="600">
+                            <span>px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group checkbox-group" id="maintain-ratio-group">
+                    <input type="checkbox" id="maintain-ratio" checked>
+                    <label for="maintain-ratio">Maintain aspect ratio (Scale)</label>
+                </div>
+
+                <div class="control-group" id="aspect-ratio-group">
+                    <label for="select-aspect-ratio">Aspect Ratio Handling</label>
+                    <select id="select-aspect-ratio">
+                        <option value="stretch">Stretch (Fill exact dimensions)</option>
+                        <option value="fit">Fit (Letterbox/Pad with background)</option>
+                        <option value="crop">Crop (Interactive in Single Mode)</option>
+                    </select>
+                </div>
+
+                <div class="control-group" id="bg-color-group" style="display:none;">
+                    <label for="input-bg-color">Padding Background Color</label>
+                    <input type="color" id="input-bg-color" value="#FFFFFF">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="input-min-size">Min File Size</label>
+                        <div class="input-suffix">
+                            <input type="number" id="input-min-size" placeholder="30" min="0" value="30">
+                            <span>KB</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="input-max-size">Max File Size</label>
+                        <div class="input-suffix">
+                            <input type="number" id="input-max-size" placeholder="50" min="1" value="50">
+                            <span>KB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="select-format">Output Format</label>
+                    <select id="select-format">
+                        <option value="image/jpeg">JPG</option>
+                        <option value="image/png">PNG (Lossless, size ignored)</option>
+                        <option value="image/webp">WebP</option>
+                        <option value="application/pdf">PDF</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="input-watermark">Watermark Text</label>
+                    <input type="text" id="input-watermark" placeholder="e.g. © 2026 MyBrand">
+                </div>
+
+                <div class="control-group adjustments-group">
+                    <label>Image Adjustments</label>
+                    <div class="slider-group">
+                        <label for="input-brightness" class="small-text">Brightness</label>
+                        <input type="range" id="input-brightness" min="0" max="200" value="100">
+                    </div>
+                    <div class="slider-group">
+                        <label for="input-contrast" class="small-text">Contrast</label>
+                        <input type="range" id="input-contrast" min="0" max="200" value="100">
+                    </div>
+                    <div class="slider-group">
+                        <label for="input-saturation" class="small-text">Saturation</label>
+                        <input type="range" id="input-saturation" min="0" max="200" value="100">
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="process-btn" class="primary-btn" disabled>Optimize Image</button>
+                    <button id="undo-btn" class="secondary-btn hidden" title="Reset to Original">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l-3 2.7"></path></svg>
+                        Reset
+                    </button>
+                </div>
+            </section>
+        </aside>
+
+        <div class="main-content-column">
+            <!-- Cropper Area (Hidden by default) -->
+            <section id="cropper-container" class="card hidden" style="margin-bottom: 1.5rem;">
+                <div class="results-header">
+                    <h2>Interactive Crop</h2>
+                    <div class="status-message">Drag to position. Output matches Target Width/Height.</div>
+                </div>
+                <div class="cropper-wrapper">
+                    <img id="cropper-image" src="" alt="Crop Source">
+                </div>
+            </section>
+
+            <!-- Results Area -->
+            <section class="results-area card">
+                <div class="results-header">
+                    <h2 id="results-title">Live Preview</h2>
+                    <div id="overall-status" class="status-message">Waiting for file...</div>
+                    <button id="download-btn" class="secondary-btn hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span id="download-btn-text">Download</span>
+                    </button>
+                </div>
+                
+                <div class="results-grid" id="results-grid">
+                    <div class="empty-state">
+                        <p>Processed images will appear here.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
