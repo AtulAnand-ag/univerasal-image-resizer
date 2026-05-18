@@ -59,11 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const bgColorGroup = document.getElementById('bg-color-group');
     const inputBgColor = document.getElementById('input-bg-color');
-    
-    const inputWatermark = document.getElementById('input-watermark');
-    const inputBrightness = document.getElementById('input-brightness');
-    const inputContrast = document.getElementById('input-contrast');
-    const inputSaturation = document.getElementById('input-saturation');
 
     const processBtn = document.getElementById('process-btn');
     const undoBtn = document.getElementById('undo-btn');
@@ -225,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Realtime preview triggers
-    [inputMinSize, inputMaxSize, selectFormat, inputBgColor, inputWatermark, inputBrightness, inputContrast, inputSaturation].forEach(el => {
+    [inputMinSize, inputMaxSize, selectFormat, inputBgColor].forEach(el => {
         el.addEventListener('input', triggerLivePreview);
         el.addEventListener('change', triggerLivePreview);
     });
@@ -238,10 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
             inputMinSize.value = originalState.min;
             inputMaxSize.value = originalState.max;
             selectFormat.value = originalState.format;
-            inputBrightness.value = 100;
-            inputContrast.value = 100;
-            inputSaturation.value = 100;
-            inputWatermark.value = "";
             selectAspectRatio.value = "stretch";
             updateCropperUI();
             triggerLivePreview();
@@ -454,12 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const aspectRatioMode = selectAspectRatio.value; 
         const bgColor = inputBgColor.value;
 
-        // Image Adjustments
-        const brightness = inputBrightness.value;
-        const contrast = inputContrast.value;
-        const saturation = inputSaturation.value;
-        const watermarkText = inputWatermark.value.trim();
-
         if (!targetW || !targetH || !minKB || !maxKB) {
             if (isBatchMode) alert('Please fill out all target parameters.');
             return;
@@ -505,9 +490,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.clearRect(0, 0, targetW, targetH);
             }
 
-            // Apply Filters
-            ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
-
             // Aspect Ratio Logic
             const imgW = data.imgObj.width;
             const imgH = data.imgObj.height;
@@ -533,27 +515,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dh = imgH * scale;
                 const dx = (targetW - dw) / 2;
                 const dy = (targetH - dh) / 2;
-                ctx.drawImage(data.imgObj, dx, dy, dw, dh);
-            }
-
-            // Draw Watermark
-            if (watermarkText) {
-                ctx.filter = 'none'; // reset filter for text
-                const fontSize = Math.max(14, Math.floor(targetH * 0.05));
-                ctx.font = `600 ${fontSize}px Inter, sans-serif`;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'bottom';
-                
-                ctx.shadowColor = 'rgba(0,0,0,0.6)';
-                ctx.shadowBlur = 6;
-                ctx.shadowOffsetX = 1;
-                ctx.shadowOffsetY = 1;
-                
-                ctx.fillText(watermarkText, targetW - (fontSize * 0.5), targetH - (fontSize * 0.5));
-                
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
             }
 
             // Async yield before compression
